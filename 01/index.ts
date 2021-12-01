@@ -30,7 +30,7 @@ function calcSum(data: number[], i: number): number {
 
 // Part 2
 // ======
-// ~3 ms - answer: 1130
+// ~1.3 ms - answer: 1130
 
 const part2 = (input: string) => {
 	const start = now();

@@ -1,11 +1,10 @@
 {
-	"name": "aoc_template",
+	"name": "aoc2021",
 	"version": "1.0.0",
 	"description": "",
 	"scripts": {
 		"start": "./run.sh"
 	},
-
 	"adventConfig": {
 		"nameTemplate": "{{num}}/index.ts",
 		"templateFile": "template/day.ts"

@@ -1,5 +1,7 @@
 import { default as now } from "performance-now";
 
+const countOnes = (str: string): number => str.split("1").length - 1;
+
 // Part 1
 // ======
 // ~5 ms - answer: 3374136
@@ -20,7 +22,8 @@ const part1 = (input: string) => {
 	let gm = "";
 
 	data.forEach((x) => {
-		let ones = x.split("1").length - 1;
+		let ones = countOnes(x);
+
 		if (ones > x.length / 2) {
 			gm += "1";
 		} else {
@@ -48,13 +51,8 @@ const part1 = (input: string) => {
 };
 
 function filter(initial: string[], i: number, filterCheck: boolean): string[] {
-	let totalZeroes =
-		initial
-			.map((x) => x[i])
-			.join("")
-			.split("0").length - 1;
-
-	let totalOnes = initial.length - totalZeroes;
+	let totalOnes = countOnes(initial.map((x) => x[i]).join(""));
+	let totalZeroes = initial.length - totalOnes;
 
 	let hastobe = "";
 

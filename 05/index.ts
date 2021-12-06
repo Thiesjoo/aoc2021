@@ -1,87 +1,76 @@
 import { default as now } from "performance-now";
 
-type matrix = (number | null)[][][];
+const arraySize = 1000;
+type matrix = (number | null)[][];
 
 function fillMatrix(mat: matrix, start: number[], end: number[]) {
-	for (let j = start[1]; j <= end[1]; j++) {
-		for (let i = start[0]; i <= end[0]; i++) {
-			if (!mat[j][i]) {
-				mat[j][i] = [];
+	let xDiff = start[0] - end[0];
+	let yDiff = start[1] - end[1];
+
+	for (let j = 0; j <= Math.abs(xDiff); j++) {
+		for (let i = 0; i <= Math.abs(yDiff); i++) {
+			let y = start[0] + (xDiff < 0 ? j : -j);
+			let x = start[1] + (yDiff < 0 ? i : -i);
+
+			if (mat[x][y] == null) {
+				mat[x][y] = 0;
 			}
-			mat[j][i].push(1);
+			//@ts-ignore
+			mat[x][y]++;
 		}
 	}
 }
 
-function fillMatrix2(mat: matrix, start: number[], end: number[]) {
+function fillDiagonalMatrix(mat: matrix, start: number[], end: number[]) {
 	let diff = start[0] - end[0];
+
 	let xDir = diff;
 	let yDir = start[1] - end[1];
 
-	for (let xy = 0; xy < Math.abs(diff) + 1; xy++) {
+	for (let xy = 0; xy <= Math.abs(diff); xy++) {
 		let y = start[0] + (xDir < 0 ? xy : -xy);
 		let x = start[1] + (yDir < 0 ? xy : -xy);
 
-		if (!mat[x][y]) {
-			mat[x][y] = [];
+		if (mat[x][y] == null) {
+			mat[x][y] = 0;
 		}
-		mat[x][y].push(1);
+		//@ts-ignore
+		mat[x][y]++;
 	}
+}
+
+function inputToMatrix(input: string): [matrix, number[][][]] {
+	const map: matrix = Array(arraySize)
+		.fill(0)
+		.map(() => Array(arraySize).fill(0));
+
+	return [
+		map,
+		input
+			.split("\n")
+			.map((x) => x.split(" -> ").map((y) => y.split(",").map(Number))),
+	];
 }
 
 // Part 1
 // ======
-// ~0 ms - answer: 0
+// ~22 ms - answer: 6113
 
 const part1 = (input: string) => {
 	const start = now();
 	let result = 0;
 
-	const arraySize = 1000;
-	const map: (number | null)[][][] = Array(arraySize)
-		.fill(0)
-		.map((x) =>
-			Array(arraySize)
-				.fill(0)
-				.map((y) => Array())
-		);
+	const [map, data] = inputToMatrix(input);
 
-	const data = input
-		.split("\n")
-		.map((x) => x.split(" -> ").map((y) => y.split(",").map(Number)));
-
-	data.forEach((x) => {
-		const [start, end] = x;
-
-		if (start[0] == end[0] && start[1] != end[1]) {
-			fillMatrix(
-				map,
-				start[1] < end[1] ? start : end,
-				start[1] < end[1] ? end : start
-			);
-		} else if (start[1] == end[1] && start[0] != end[0]) {
-			// console.log(x);
-			fillMatrix(
-				map,
-				start[0] < end[0] ? start : end,
-				start[0] < end[0] ? end : start
-			);
+	data.forEach(([start, end]) => {
+		if (start[0] == end[0] || start[1] == end[1]) {
+			fillMatrix(map, start, end);
 		}
 	});
 
-	let resString = "";
-
-	map.forEach((x) => {
-		x.forEach((y) => {
-			resString += y ? y.length + "" : ".";
-		});
-		resString += "\n";
-	});
-	console.log(resString);
-
 	map.forEach((x) =>
 		x.forEach((y) => {
-			if (y && y.length > 1) result++;
+			if (y && y > 1) result++;
 		})
 	);
 
@@ -93,60 +82,25 @@ const part1 = (input: string) => {
 
 // Part 2
 // ======
-// ~0 ms - answer: 20373
+// ~24 ms - answer: 20373
 
 const part2 = (input: string) => {
 	const start = now();
 	let result = 0;
 
-	const arraySize = 1000;
-	const map: (number | null)[][][] = Array(arraySize)
-		.fill(0)
-		.map((x) =>
-			Array(arraySize)
-				.fill(0)
-				.map((y) => Array())
-		);
+	const [map, data] = inputToMatrix(input);
 
-	const data = input
-		.split("\n")
-		.map((x) => x.split(" -> ").map((y) => y.split(",").map(Number)));
-
-	data.forEach((x) => {
-		const [start, end] = x;
-
-		if (start[0] == end[0] && start[1] != end[1]) {
-			fillMatrix(
-				map,
-				start[1] < end[1] ? start : end,
-				start[1] < end[1] ? end : start
-			);
-		} else if (start[1] == end[1] && start[0] != end[0]) {
-			// console.log(x);
-			fillMatrix(
-				map,
-				start[0] < end[0] ? start : end,
-				start[0] < end[0] ? end : start
-			);
+	data.forEach(([start, end]) => {
+		if (start[0] == end[0] || start[1] == end[1]) {
+			fillMatrix(map, start, end);
 		} else {
-			// diagonal
-			fillMatrix2(map, start, end);
+			fillDiagonalMatrix(map, start, end);
 		}
 	});
 
-	let resString = "";
-
-	map.forEach((x) => {
-		x.forEach((y) => {
-			resString += y ? y.length + "" : ".";
-		});
-		resString += "\n";
-	});
-	console.log(resString);
-
 	map.forEach((x) =>
 		x.forEach((y) => {
-			if (y && y.length > 1) result++;
+			if (y && y > 1) result++;
 		})
 	);
 

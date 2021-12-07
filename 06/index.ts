@@ -22,7 +22,7 @@ function runSimulation(times: number, input: string): number {
 function runSimulationSlow(times: number, input: string): number {
 	const data = input.split(",").map(Number);
 
-	for (let iter = 0; iter < 80; iter++) {
+	for (let iter = 0; iter < times; iter++) {
 		let currentLength = data.length;
 		for (let i = 0; i < currentLength; i++) {
 			if (data[i] == 0) {
@@ -57,7 +57,7 @@ const part1 = (input: string) => {
 const part2 = (input: string) => {
 	const start = now();
 
-	let result = runSimulation(256, input);
+	let result = runSimulationSlow(256, input);
 
 	const end = now();
 	console.log("Execution time: ~%dms", (end - start).toFixed(3));

@@ -1,20 +1,23 @@
 import { default as now } from "performance-now";
 
+function calculate(input: string, compare: (a: number, b: number) => number) {
+	const data = input.split(",").map(Number);
+
+	return Math.min(
+		...data.map((x) =>
+			data.map((y) => compare(x, y)).reduce((acc, val) => acc + val, 0)
+		)
+	);
+}
+
 // Part 1
 // ======
-// ~67 ms - answer: 328318
+// ~26.8 ms - answer: 328318
 
 const part1 = (input: string) => {
 	const start = now();
-	let result = 0;
 
-	const data = input.split(",").map(Number);
-
-	const diff = data.map((x) => {
-		return data.map((y) => Math.abs(y - x)).reduce((acc, val) => acc + val, 0);
-	});
-	diff.sort((a, b) => a - b);
-	result = diff[0];
+	let result = calculate(input, (a, b) => Math.abs(b - a));
 
 	const end = now();
 	console.log("Execution time: ~%dms", (end - start).toFixed(3));
@@ -24,28 +27,15 @@ const part1 = (input: string) => {
 
 // Part 2
 // ======
-// ~65 ms - answer: 89791146
+// ~27.6 ms - answer: 89791146
 
 const part2 = (input: string) => {
 	const start = now();
-	let result = 0;
 
-	const data = input.split(",").map(Number);
-
-	// 1000 werkt gewoon, terwijl er ook grotere getallen dan 1000 in de input zaten.
-	const diff = new Array(1000).fill(0).map((_, x) => {
-		return data
-			.map((y) => {
-				const lolz = Math.abs(y - x);
-
-				// Coole formule om te berekenen.
-				return (lolz * (lolz + 1)) / 2;
-			})
-			.reduce((acc, val) => acc + val, 0);
+	let result = calculate(input, (a, b) => {
+		const diff = Math.abs(b - a);
+		return (diff * (diff + 1)) / 2;
 	});
-
-	diff.sort((a, b) => a - b);
-	result = diff[0];
 
 	const end = now();
 	console.log("Execution time: ~%dms", (end - start).toFixed(3));

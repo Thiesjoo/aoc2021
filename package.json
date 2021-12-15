@@ -10,6 +10,7 @@
 		"templateFile": "template/day.ts"
 	},
 	"dependencies": {
+		"a-star": "^0.2.0",
 		"advent-of-code": "^5.0.0",
 		"nodemon": "^2.0.13",
 		"performance-now": "^2.1.0",

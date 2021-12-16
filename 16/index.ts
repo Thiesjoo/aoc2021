@@ -1,62 +1,65 @@
 import { default as now } from "performance-now";
 
+function calculateSum(packet: Packet): number {
+	return (
+		packet.version +
+		(packet.type != 4
+			? packet.subPackets.reduce((acc, val) => acc + calculateSum(val), 0)
+			: 0)
+	);
+}
+
 // Part 1
 // ======
-// ~0.31 ms - answer: 953
+// ~100 ms - answer: 953
 
 const part1 = (input: string) => {
 	const start = now();
 	let result = 0;
 
-	let data = BigInt(`0x${input}`)
-		.toString(2)
-		// input.length hex chars that are 4 bits each
-		.padStart(4 * input.length, "0");
+	result = calculateSum(constructPacket(fromBin(input)).packet);
 
-	let i = 0;
-	let versionNumberSum = 0;
-
-	while (i < data.length) {
-		versionNumberSum += parseInt(data.substr(i, 3), 2);
-		const typeId = parseInt(data.substr(i + 3, 3), 2);
-		if (typeId === 4) {
-			// Operator packet (Skip header and skip contents)
-			i += 6;
-			while (data[i] !== "0") {
-				i += 5;
-			}
-
-			// Final content package
-			i += 5;
-		} else {
-			i += +data[i + 6] ? 18 : 22;
-		}
-	}
-	result = versionNumberSum;
 	const end = now();
 	console.log("Execution time: ~%dms", (end - start).toFixed(3));
 
 	return result;
 };
 
-type packet = {
+function getChars(data: string[], amount: number): string {
+	return data.splice(0, amount).join("");
+}
+
+type ValidNumbers = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+type MainPacket = {
 	version: number;
 	type: number;
-	value?: number;
-	subPackets?: packet[];
 };
 
-function constructPacket(data: string): { packet: packet; rest: string } {
+type ValuePacket =
+	| {
+			type: 4;
+			value: number;
+	  } & MainPacket;
+
+type OperatorPacket = {
+	type: Exclude<ValidNumbers, 4>;
+	subPackets: Packet[];
+} & MainPacket;
+
+type Packet = OperatorPacket | ValuePacket;
+
+function constructPacket(data: string): { packet: Packet; rest: string } {
 	const chars = data.split("");
 
-	const version = parseInt(chars.splice(0, 3).join(""), 2);
-	const type = parseInt(chars.splice(0, 3).join(""), 2);
+	const version = parseInt(getChars(chars, 3), 2);
+	const type = parseInt(getChars(chars, 3), 2);
 
 	if (type == 4) {
 		let literalBinary = "";
 
 		while (true) {
-			const sub = chars.splice(0, 5).join("").padEnd(5, "0");
+			const sub = getChars(chars, 5);
 			literalBinary += sub.substring(1);
 
 			if (sub[0] === "0") break;
@@ -71,11 +74,10 @@ function constructPacket(data: string): { packet: packet; rest: string } {
 	const lengthType = chars.splice(0, 1)[0];
 
 	if (lengthType == "0") {
-		// 15
-		let totalLength = parseInt(chars.splice(0, 15).join(""), 2);
-		let subPacketContent = chars.splice(0, totalLength).join("");
+		let totalLength = parseInt(getChars(chars, 15), 2);
+		let subPacketContent = getChars(chars, totalLength);
 
-		let newPackets: packet[] = [];
+		let newPackets: Packet[] = [];
 		while (subPacketContent.length > 0) {
 			const { packet, rest } = constructPacket(subPacketContent);
 
@@ -84,14 +86,18 @@ function constructPacket(data: string): { packet: packet; rest: string } {
 		}
 
 		return {
-			packet: { version, type, subPackets: newPackets },
+			packet: {
+				version,
+				type: type as Exclude<ValidNumbers, 4>,
+				subPackets: newPackets,
+			},
 			rest: chars.join(""),
 		};
 	} else {
-		const subPacketCount = parseInt(chars.splice(0, 11).join(""), 2);
+		const subPacketCount = parseInt(getChars(chars, 11), 2);
 		let subData = chars.join("");
 
-		const subPackets: packet[] = [];
+		const subPackets: Packet[] = [];
 
 		for (let i = 0; i < subPacketCount; i++) {
 			const { packet, rest } = constructPacket(subData);
@@ -101,17 +107,17 @@ function constructPacket(data: string): { packet: packet; rest: string } {
 		}
 
 		return {
-			packet: { version, type, subPackets },
+			packet: { version, type: type as Exclude<ValidNumbers, 4>, subPackets },
 			rest: subData,
-		}; //11
+		};
 	}
 }
 
-function getPacketValue(packet: packet): number {
-	if (packet.type == 4) return (packet as { value: number }).value;
+function getPacketValue(packet: Packet): number {
+	if (packet.type == 4) return packet.value;
 
-	const subPacketValues = (packet as { subPackets: packet[] }).subPackets.map(
-		(subPacket) => getPacketValue(subPacket)
+	const subPacketValues = packet.subPackets.map((subPacket) =>
+		getPacketValue(subPacket)
 	);
 
 	switch (packet.type) {
@@ -129,27 +135,27 @@ function getPacketValue(packet: packet): number {
 			return subPacketValues[0] < subPacketValues[1] ? 1 : 0;
 		case 7:
 			return subPacketValues[0] === subPacketValues[1] ? 1 : 0;
-		default:
-			throw new Error("Invalid packet type: " + packet.type);
 	}
+}
+
+function fromBin(input: string): string {
+	return (
+		BigInt(`0x${input}`)
+			.toString(2)
+			// input.length hex chars that are 4 bits each
+			.padStart(4 * input.length, "0")
+	);
 }
 
 // Part 2
 // ======
-// ~0 ms - answer: 0
+// ~100 ms - answer: 246225449979
 
 const part2 = (input: string) => {
 	const start = now();
 	let result = 0;
 
-	let data = BigInt(`0x${input}`)
-		.toString(2)
-		// input.length hex chars that are 4 bits each
-		.padStart(4 * input.length, "0");
-
-	const rootPacket = constructPacket(data).packet;
-
-	result = getPacketValue(rootPacket);
+	result = getPacketValue(constructPacket(fromBin(input)).packet);
 
 	const end = now();
 	console.log("Execution time: ~%dms", (end - start).toFixed(3));

@@ -1,64 +1,78 @@
 import { default as now } from "performance-now";
 
-// type IDK = IDK[] | number[] | number;
-
-function getArrayDepth(value: any[]): number {
-	return Array.isArray(value) ? 1 + Math.max(...value.map(getArrayDepth)) : 0;
+function split(test: string): string {
+	return test.replace(
+		/(\d\d+)/, // 10+
+		(d) => `[${Math.floor(+d / 2)},${Math.ceil(+d / 2)}]`
+	);
 }
 
-function getMaxArray(value: any[]): number {
-	return Array.isArray(value) ? Math.max(...value.map(getMaxArray)) : value;
-}
+function explode(s: string): string {
+	let opens = -1;
+	for (let i = 0; i < s.length; i++) {
+		if (s[i] === "[") {
+			opens++;
+		} else if (s[i] === "]") {
+			opens--;
+		} else if (opens >= 4) {
+			const [x, l, r] = s.slice(i).match(/(\d+),(\d+)/)!;
 
-let hasSplitted = false;
+			const left = s
+				.slice(0, i - 1)
+				// Get the most left value that closes out a string
+				.replace(/(\d+)(\D+)$/, (m, d, p) => `${+d + +l}${p}`);
 
-function split(test: any[]): any[] {
-	if (hasSplitted) return test;
+			const right = s
+				.slice(i + x.length + 1)
+				.replace(/(\d+)/, (d) => (+d + +r).toString());
 
-	if (!Array.isArray(test)) {
-		if (test >= 10) {
-			hasSplitted = true;
-			return [Math.floor(test / 2), Math.ceil(test / 2)];
+			return `${left}0${right}`;
 		}
-		return test;
 	}
-
-	return test.map(split);
+	return s;
 }
 
-function reduce(asd: any[]): any[] {
-	if (getArrayDepth(asd) >= 4) {
-		// return reduce(explode(asd));
+function reduce(s: string): string {
+	while (true) {
+		const previous = s;
+		if ((s = explode(s)) !== previous) continue;
+		if ((s = split(s)) !== previous) continue;
+		return previous;
 	}
-
-	if (getMaxArray(asd) >= 10) {
-		hasSplitted = false;
-		return reduce(split(asd));
-	}
-
-	return asd;
 }
 
-function add(test: any[], test2: any[]): any[] {
-	let asd = [test, test2];
-	return reduce(asd);
+function add(first: string, second: string): string {
+	return reduce(`[${first},${second}]`);
+}
+
+function magnitude(node: any): number {
+	if (!Array.isArray(node)) return node;
+	return 3 * magnitude(node[0]) + 2 * magnitude(node[1]);
+}
+
+function get_magnitude(s: string): number {
+	return magnitude(eval(s));
 }
 
 // Part 1
 // ======
-// ~0 ms - answer: 0
+// ~50 ms - answer: 4417
 
 const part1 = (input: string) => {
 	const start = now();
 	let result = 0;
 
-	const data = input.split("\n").map(eval);
+	const data = input.split("\n");
 
-	console.log(add(data[0], data[1]));
+	let current = data[0];
 
-	let temp = split(eval("[[[[0,7],4],[15,[0,13]]],[1,1]]"));
-	hasSplitted = false;
-	console.log(JSON.stringify(reduce(eval("[[[[0,7],4],[15,[0,13]]],[1,1]]"))));
+	for (let i = 1; i < data.length; i++) {
+		current = add(current, data[i]);
+	}
+
+	result = get_magnitude(current);
+
+	console.log(current);
 
 	const end = now();
 	console.log("Execution time: ~%dms", (end - start).toFixed(3));
@@ -68,13 +82,25 @@ const part1 = (input: string) => {
 
 // Part 2
 // ======
-// ~0 ms - answer: 0
+// ~642 ms - answer: 4796
 
 const part2 = (input: string) => {
 	const start = now();
 	let result = 0;
 
 	const data = input.split("\n");
+
+	for (let i = 0; i < data.length; i++) {
+		for (let j = 0; j < data.length; j++) {
+			if (i == j) continue;
+
+			let temp = get_magnitude(add(data[i], data[j]));
+
+			if (temp > result) {
+				result = temp;
+			}
+		}
+	}
 
 	const end = now();
 	console.log("Execution time: ~%dms", (end - start).toFixed(3));

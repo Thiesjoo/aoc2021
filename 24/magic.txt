@@ -1,0 +1,81 @@
+Repeating code block: 
+
+inp w
+mul x 0
+add x z
+mod x 26
+div z {div}
+add x {check}
+eql x w
+eql x 0
+mul y 0
+add y 25
+mul y x
+add y 1
+mul z y
+mul y 0
+add y w
+add y {offset}
+mul y x
+add z y
+
+
+# Parsed into code:
+w = input
+x = ((z % 26) + b != w);
+z = (25 * x) + 1 + (w + c * x);
+
+
+
+#  If {CHECK} is positive, push (input + {OFFSET}) onto the stack.
+- If {CHECK} is negative, pop from the stack. If the popped value plus {CHECK}
+  does not equal the input, then push (input + {OFFSET}) onto the stack.
+- After all instructions have run, we are successful if the stack is empty.
+
+# check:   +,  +,  +,  -8, +,  +, -11,  -4,  -15, +, +,  -1, -8,  -14
+# offset = 6, 14, 14, 10,  9, 12,   8,  13,   12, 6, 9,  15,  4,   10
+
+const int div[] = {0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1};
+const int check[] = {11, 13, 15, -8, 13, 15, -11, -4, -15, 14, 14, -1, -8, -14};
+const int offset[] = {6, 14, 14, 10, 9, 12, 8, 13, 12, 6, 9, 15, 4, 10};
+
+
+push I[0] + 6
+push I[1] + 14
+push I[2] + 14
+pop:  I[3] == popped - 8
+push I[4] + 9
+push I[5] + 12
+pop:  I[6] == popped - 11
+pop:  I[7] == popped - 4
+pop:  I[8] == popped - 15
+push I[9] + 6
+push I[10] + 9
+pop:  I[11] == popped - 1
+pop:  I[12] == popped - 8
+pop:  I[13] == popped - 14
+
+
+# stack
+i[3] = i[2] + 14 - 8
+i[6] = i[5] + 12 - 11
+i[7] = i[4] + 9 - 4
+i[8] = i[1] + 14 - 15
+i[11] = i[10] + 9 - 1
+i[12] = i[9] + 6 - 8
+i[13] = i[0] + 6 - 14
+
+
+# stack parsed from ^
+i[3] = i[2] + 6
+i[6] = i[5] + 1
+i[7] = i[4] + 5
+i[8] = i[1] - 1
+i[11] = i[10] + 8
+i[12] = i[9] - 2
+i[13] = i[0] - 8
+
+
+
+99394899899171
+92171126131911
